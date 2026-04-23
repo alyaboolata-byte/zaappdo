@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZaappDo</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #FAFAF9;
+    --surface: #F4F3F0;
+    --border: #E8E6E0;
+    --text: #1C1B18;
+    --muted: #8B8980;
+    --accent: #2D6A4F;
+    --accent-light: #D8F0E6;
+    --danger: #C0392B;
+    --danger-light: #FDECEA;
+    --radius: 10px;
+  }
+
+  html, body { height: 100%; background: var(--bg); font-family: 'Geist', sans-serif; color: var(--text); font-size: 14px; -webkit-font-smoothing: antialiased; user-select: none; }
+
+  /* titlebar */
+  .titlebar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 8px; -webkit-app-region: drag; }
+  .titlebar-title { font-size: 13px; font-weight: 500; color: var(--muted); }
+  .titlebar-btns { display: flex; gap: 0; -webkit-app-region: no-drag; margin-right: -16px; }
+  .tb-btn { width: 46px; height: 32px; border-radius: 0; border: none; cursor: pointer; background: transparent; color: var(--muted); font-size: 10px; display: flex; align-items: center; justify-content: center; transition: background 0.1s; }
+  .tb-close { color: var(--text); }
+  .tb-btn:hover { background: var(--surface); }
+  .tb-close:hover { background: #C42B1C; color: #fff; }
+
+  /* header */
+  .header { padding: 4px 20px 16px; }
+  .header h1 { font-size: 22px; font-weight: 500; letter-spacing: -0.5px; }
+  .header .date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* pro badge */
+  .pro-badge { display: inline-block; font-size: 10px; font-weight: 500; background: var(--accent); color: #fff; padding: 2px 7px; border-radius: 20px; vertical-align: middle; margin-left: 8px; letter-spacing: 0.04em; }
+
+  /* add row */
+  .add-row { display: flex; gap: 8px; padding: 0 20px 16px; }
+  .add-input { flex: 1; padding: 9px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); font-family: inherit; font-size: 14px; color: var(--text); outline: none; }
+  .add-input:focus { border-color: var(--accent); background: #fff; }
+  .add-input::placeholder { color: var(--muted); }
+  .add-btn { padding: 9px 16px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+  .add-btn:hover { background: #245C43; }
+  .add-btn:active { transform: scale(0.97); }
+
+  /* category tabs */
+  .tabs { display: flex; gap: 4px; padding: 0 20px 12px; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 5px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: inherit; white-space: nowrap; transition: all 0.12s; }
+  .tab.active { background: var(--text); color: #fff; border-color: var(--text); }
+  .tab:hover:not(.active) { background: var(--surface); }
+
+  /* task list */
+  .task-list { flex: 1; overflow-y: auto; padding: 0 20px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .task-list::-webkit-scrollbar { width: 4px; }
+  .task-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; }
+  .empty .e-icon { font-size: 32px; margin-bottom: 8px; }
+
+  .section-label { font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin: 12px 0 6px; }
+
+  .task { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--border); background: #fff; margin-bottom: 5px; cursor: pointer; transition: border-color 0.12s, opacity 0.2s; }
+  .task:hover { border-color: #C8C6C0; }
+  .task:hover .del { opacity: 1; }
+
+  .check { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .task.done .check { background: var(--accent); border-color: var(--accent); }
+  .check-tick { display: none; width: 10px; height: 7px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg) translateY(-1px); }
+  .task.done .check-tick { display: block; }
+
+  .task-text { flex: 1; font-size: 14px; }
+  .task.done .task-text { text-decoration: line-through; color: var(--muted); }
+
+  .cat-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  .del { opacity: 0; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 16px; padding: 2px 4px; border-radius: 4px; transition: opacity 0.12s, color 0.12s; }
+  .del:hover { color: var(--danger); background: var(--danger-light); }
+
+  /* bottom bar */
+  .bottom { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .bottom-count { font-size: 12px; color: var(--muted); }
+  .clear-btn { font-size: 12px; color: var(--muted); background: none; border: none; cursor: pointer; font-family: inherit; padding: 4px 8px; border-radius: 6px; }
+  .clear-btn:hover { background: var(--danger-light); color: var(--danger); }
+
+  /* paywall */
+  .paywall-overlay { display: none; position: fixed; inset: 0; background: rgba(28,27,24,0.5); z-index: 50; align-items: flex-end; justify-content: center; }
+  .paywall-overlay.show { display: flex; }
+  .paywall { background: var(--bg); border-radius: 16px 16px 0 0; padding: 28px 24px 32px; width: 100%; animation: slideUp 0.22s ease; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .paywall h2 { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
+  .paywall p { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+  .price-tag { font-size: 32px; font-weight: 500; color: var(--accent); margin-bottom: 20px; }
+  .price-tag span { font-size: 14px; color: var(--muted); font-weight: 400; }
+  .features { list-style: none; margin-bottom: 24px; }
+  .features li { font-size: 13px; padding: 5px 0; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .features li::before { content: '✓'; color: var(--accent); font-weight: 500; }
+  .trial-btn { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-size: 15px; font-weight: 500; font-family: inherit; cursor: pointer; margin-bottom: 8px; }
+  .trial-btn:hover { background: #245C43; }
+  .sub-btn { width: 100%; padding: 13px; background: #fff; color: var(--accent); border: 1.5px solid var(--accent); border-radius: var(--radius); font-size: 15px; font-weight: 500; font-family: inherit; cursor: pointer; margin-bottom: 8px; }
+  .sub-btn:hover { background: var(--accent-light); }
+  .skip-btn { width: 100%; padding: 10px; background: none; border: none; font-size: 13px; color: var(--muted); font-family: inherit; cursor: pointer; }
+
+  /* loading spinner */
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .app { display: flex; flex-direction: column; height: 100vh; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="titlebar">
+    <span class="titlebar-title">ZaappDo</span>
+    <div class="titlebar-btns">
+      <button class="tb-btn tb-min" title="Minimize" onclick="window.api.minimize()">
+        <svg width="10" height="1" viewBox="0 0 10 1"><rect width="10" height="1" fill="currentColor"/></svg>
+      </button>
+      <button class="tb-btn tb-close" title="Close" onclick="window.api.close()">
+        <svg width="10" height="10" viewBox="0 0 10 10"><line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1.2"/><line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1.2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="header">
+    <h1 id="view-title">Today <span class="pro-badge" id="pro-badge" style="display:none">PRO</span></h1>
+    <div class="date" id="date-str"></div>
+  </div>
+
+  <div class="add-row">
+    <input class="add-input" id="new-task" placeholder="Add a task..." maxlength="120" />
+    <button class="add-btn" onclick="addTask()">Add</button>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-cat="all"      onclick="setTab(this)">All</button>
+    <button class="tab"        data-cat="today"    onclick="setTab(this)">Today</button>
+    <button class="tab"        data-cat="work"     onclick="setTab(this)">Work</button>
+    <button class="tab"        data-cat="personal" onclick="setTab(this)">Personal</button>
+    <button class="tab"        data-cat="health"   onclick="setTab(this)">Health</button>
+  </div>
+
+  <div class="task-list" id="task-list"></div>
+
+  <div class="bottom">
+    <span class="bottom-count" id="bottom-count"></span>
+    <button class="clear-btn" onclick="clearDone()">Clear completed</button>
+  </div>
+
+</div>
+
+<!-- Paywall -->
+<div class="paywall-overlay" id="paywall">
+  <div class="paywall">
+    <h2>ZaappDo Pro</h2>
+    <p>Unlimited tasks, all categories, zero limits.</p>
+    <div class="price-tag">$25 <span>/ month</span></div>
+    <ul class="features">
+      <li>Unlimited tasks</li>
+      <li>All categories</li>
+      <li>7-day free trial</li>
+      <li>Cancel anytime from Microsoft account</li>
+    </ul>
+    <button class="trial-btn" id="trial-btn" onclick="startTrial()">Start free 7-day trial</button>
+    <button class="sub-btn"   id="sub-btn"   onclick="startSubscription()">Subscribe — $25/month</button>
+    <button class="skip-btn" onclick="closePaywall()">Maybe later</button>
+  </div>
+</div>
+
+<script>
+// ─── Microsoft Store Add-on Product ID ───────────────────────────────────────
+const ADDON_STORE_ID = 'zaappdo_pro_weekly'; // Product ID set in Partner Center
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const CAT_COLORS = {
+  today:    '#1D9E75',
+  work:     '#378ADD',
+  personal: '#7F77DD',
+  health:   '#639922',
+};
+
+let tasks = [];
+let currentCat = 'all';
+let isPro = false;
+const FREE_LIMIT = 5;
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  document.getElementById('date-str').textContent =
+    new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  tasks = await window.api.getTasks();
+
+  // 1. Check local cache first (fast)
+  const cached = await window.api.getSub();
+  isPro = cached.active && (!cached.trial || cached.expires > Date.now());
+
+  // 2. Then verify live license from Microsoft Store (authoritative)
+  await verifyStoreLicense();
+
+  render();
+}
+
+// ─── Microsoft Store License Verification ────────────────────────────────────
+async function verifyStoreLicense() {
+  try {
+    // Windows.Services.Store is only available inside a packaged MSIX app
+    if (typeof Windows === 'undefined' || !Windows.Services || !Windows.Services.Store) {
+      // Running unpackaged (dev mode) — trust local cache
+      return;
+    }
+
+    const context = Windows.Services.Store.StoreContext.getDefault();
+    const result  = await context.getAppLicenseAsync();
+
+    if (result && result.addOnLicenses) {
+      const addonLicense = result.addOnLicenses.lookup(ADDON_STORE_ID);
+      if (addonLicense && addonLicense.isActive) {
+        isPro = true;
+        // Sync to local store so it survives brief offline periods
+        await window.api.saveSub({
+          active: true,
+          trial: false,
+          plan: 'monthly',
+          verifiedAt: Date.now()
+        });
+        return;
+      }
+    }
+
+    // No active license found — revoke pro if it wasn't a trial
+    const cached = await window.api.getSub();
+    if (cached.active && !cached.trial) {
+      isPro = false;
+      await window.api.saveSub({ active: false, trial: false });
+    }
+
+  } catch (err) {
+    // Store API error — fall back to cached value silently
+    console.warn('Store license check failed:', err);
+  }
+}
+
+// ─── Purchase Flow ────────────────────────────────────────────────────────────
+async function startSubscription() {
+  const btn = document.getElementById('sub-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Opening Store…';
+
+  try {
+    if (typeof Windows === 'undefined' || !Windows.Services || !Windows.Services.Store) {
+      // Dev mode fallback
+      alert('Store purchases only work in the published MSIX app.\nIn dev mode, use the trial button.');
+      btn.disabled = false;
+      btn.textContent = 'Subscribe — $25/month';
+      return;
+    }
+
+    const context = Windows.Services.Store.StoreContext.getDefault();
+    const result  = await context.requestPurchaseAsync(ADDON_STORE_ID);
+
+    switch (result.status) {
+      case Windows.Services.Store.StorePurchaseStatus.succeeded:
+      case Windows.Services.Store.StorePurchaseStatus.alreadyPurchased:
+        isPro = true;
+        await window.api.saveSub({
+          active: true,
+          trial: false,
+          plan: 'monthly',
+          verifiedAt: Date.now()
+        });
+        closePaywall();
+        render();
+        break;
+
+      case Windows.Services.Store.StorePurchaseStatus.notPurchased:
+        // User cancelled — do nothing
+        break;
+
+      default:
+        alert('Purchase could not be completed. Please try again.');
+    }
+
+  } catch (err) {
+    console.error('Purchase error:', err);
+    alert('Something went wrong. Please try again.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Subscribe — $25/month';
+  }
+}
+
+async function startTrial() {
+  const btn = document.getElementById('trial-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Starting trial…';
+
+  await window.api.startTrial();
+  isPro = true;
+  closePaywall();
+  render();
+}
+
+function closePaywall() {
+  document.getElementById('paywall').classList.remove('show');
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function save() { window.api.saveTasks(tasks); }
+
+function render() {
+  // Show/hide PRO badge
+  document.getElementById('pro-badge').style.display = isPro ? 'inline-block' : 'none';
+
+  const list     = document.getElementById('task-list');
+  const filtered = currentCat === 'all' ? tasks : tasks.filter(t => t.cat === currentCat);
+  const pending  = filtered.filter(t => !t.done);
+  const done     = filtered.filter(t => t.done);
+
+  document.getElementById('bottom-count').textContent =
+    filtered.length === 0 ? '' : `${done.length} of ${filtered.length} done`;
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty"><div class="e-icon">✓</div>No tasks here</div>`;
+    return;
+  }
+
+  let html = pending.map(taskHTML).join('');
+  if (done.length) {
+    html += `<div class="section-label">Completed</div>` + done.map(taskHTML).join('');
+  }
+  list.innerHTML = html;
+}
+
+function taskHTML(t) {
+  const color = CAT_COLORS[t.cat] || '#888';
+  return `
+  <div class="task ${t.done ? 'done' : ''}" id="t-${t.id}">
+    <div class="check" onclick="toggle('${t.id}')">
+      <div class="check-tick"></div>
+    </div>
+    <div class="task-text">${esc(t.title)}</div>
+    <div class="cat-dot" style="background:${color}"></div>
+    <button class="del" onclick="del('${t.id}')" title="Delete">×</button>
+  </div>`;
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── Task Actions ─────────────────────────────────────────────────────────────
+function addTask() {
+  const input = document.getElementById('new-task');
+  const title = input.value.trim();
+  if (!title) return;
+
+  if (!isPro && tasks.filter(t => !t.done).length >= FREE_LIMIT) {
+    document.getElementById('paywall').classList.add('show');
+    return;
+  }
+
+  const cat = currentCat === 'all' ? 'today' : currentCat;
+  tasks.unshift({ id: Date.now().toString(), title, cat, done: false });
+  input.value = '';
+  save();
+  render();
+}
+
+function toggle(id) {
+  const t = tasks.find(t => t.id === id);
+  if (t) { t.done = !t.done; save(); render(); }
+}
+
+function del(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  save(); render();
+}
+
+function clearDone() {
+  tasks = tasks.filter(t => !t.done);
+  save(); render();
+}
+
+function setTab(el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentCat = el.dataset.cat;
+  const labels = { all: 'All Tasks', today: 'Today', work: 'Work', personal: 'Personal', health: 'Health' };
+  document.getElementById('view-title').innerHTML =
+    labels[currentCat] +
+    (isPro ? ' <span class="pro-badge">PRO</span>' : '');
+  render();
+}
+
+// Enter key
+document.getElementById('new-task').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addTask();
+});
+
+init();
+</script>
+</body>
+</html>

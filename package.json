@@ -1,0 +1,41 @@
+{
+  "name": "zaappdo",
+  "version": "1.0.0",
+  "description": "Simple daily task manager",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win appx"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0"
+  },
+  "build": {
+    "appId": "com.zaappdo.app",
+    "productName": "ZaappDo",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*"
+    ],
+    "win": {
+      "target": [
+        { "target": "appx", "arch": ["x64"] }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "appx": {
+      "identityName": "osmonbaev.ZaappDo",
+      "publisher": "CN=F33DF821-B04D-40A3-9EAB-48C3A455C90C",
+      "publisherDisplayName": "osmonbaev",
+      "applicationId": "ZaappDo",
+      "backgroundColor": "#464646",
+      "assets": "assets"
+    }
+  }
+}
