@@ -1,6 +1,6 @@
 {
   "name": "zaappdo",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple daily task manager",
   "main": "src/main.js",
   "scripts": {
